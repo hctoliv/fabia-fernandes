@@ -28,7 +28,7 @@
     intro.addEventListener('click', out);
     addEventListener('keydown', out, { once: true });
   } else {
-    requestAnimationFrame(ready);
+    ready();
   }
 
   /* ---------- header ---------- */
@@ -181,7 +181,8 @@
     if (!root.classList.contains('menu-open')) hd.classList.toggle('is-hidden', y > lastY && y > innerHeight * 1.2);
     lastY = y;
   }
-  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
+  // roda direto no evento: não depende de requestAnimationFrame (abas em segundo plano e webviews seguram os quadros)
+  const onScroll = () => { if (!ticking) { ticking = true; frame(); } };
   addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', onScroll);
   frame();
@@ -197,8 +198,8 @@
   const cio = new IntersectionObserver(es => es.forEach(e => {
     if (!e.isIntersecting) return;
     const el = e.target, to = +el.dataset.count, t0 = performance.now();
-    const step = t => { const k = clamp((t - t0) / 1600); el.textContent = Math.round(ease(k) * to); if (k < 1) requestAnimationFrame(step); };
-    requestAnimationFrame(step);
+    const step = () => { const k = clamp((performance.now() - t0) / 1600); el.textContent = Math.round(ease(k) * to); if (k < 1) setTimeout(step, 30); };
+    step();
     cio.unobserve(el);
   }), { threshold: .6 });
   $$('[data-count]').forEach(el => cio.observe(el));
